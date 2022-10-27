@@ -127,30 +127,37 @@ class sheetCl {
           }
         }
         // const data: Array<string> = fs.readdirSync("./build");
-        this.mkResult();
-        this.mkFolder(arr); // create special folder
-        this.classify(res, arr);
+        rl.question("请输入要输出的文件夹名称：>", (text: string) => {
+          if (!text) {
+            utils.error("字符错误!");
+            rl.close();
+            process.exit(1);
+          }
+          this.mkResult(text, arr);
+          this.classify(res, arr, text);
+        });
       });
     });
   }
-  mkResult() {
+  mkResult(e: string, arr: Array<string>) {
     // dev ./build/result
-    fs.mkdir("./result", (err: string) => {
-      if (err) return false;
-      return true;
+    fs.exists(`./${e}`, async (exists: string) => {
+      if (!exists) {
+        await fs.mkdirSync(`./${e}`);
+        this.mkFolder(arr, e); // create special folder
+      }
     });
   }
-  mkFolder(data: Array<string>) {
+  mkFolder(data: Array<string>, text: string) {
     // dev ./build/result
-    data.map((item) => {
-      fs.mkdir(`./result/${item}`, (err: string) => {
-        if (err) {
-          return;
-        }
-      });
+    data.map(async (item) => {
+      const e: string = await fs.existsSync(`./${text}/${item}`);
+      if (!e) {
+        await fs.mkdirSync(`./${text}/${item}`);
+      }
     });
   }
-  classify(res: Array<config>, arr: Array<string>) {
+  classify(res: Array<config>, arr: Array<string>, text: string) {
     rl.question("请输入分类列>:", async (e: string) => {
       if (!e) {
         utils.error("字符错误!");
@@ -163,7 +170,8 @@ class sheetCl {
           this.c_sort_s = item.cell.c;
         }
       });
-      utils.success("文件拷贝中...");
+      utils.success("文件分类中...");
+      utils.success("请耐心等待，不要退出...");
       spinnies.add("spinner-1", { text: "loading..." });
       for (let i = this.rowStart + 1; i < this.rowEnd; i++) {
         const cellName = xlsx.utils.encode_cell({
@@ -178,7 +186,7 @@ class sheetCl {
         // dev ./build/pictures ./build/result
         const ret = await fs.copyFileSync(
           `./pictures/${this.sheet[cellName].v}`,
-          `./result/${this.sheet[cellType].v}/${this.sheet[cellName].v}`
+          `./${text}/${this.sheet[cellType].v}/${this.sheet[cellName].v}`
         );
         if (ret) {
           utils.error(`${this.sheet[cellName].v}拷贝失败!请检查文件权限!`);
@@ -186,6 +194,7 @@ class sheetCl {
         if (i == this.rowEnd - 1) {
           spinnies.succeed("spinner-1", { text: "files copy done!" });
           utils.success("go and check pictures!");
+          this.init()
         }
       }
 
