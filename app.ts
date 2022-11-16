@@ -150,6 +150,7 @@ class sheetCl {
   }
   mkFolder(data: Array<string>, text: string) {
     // dev ./build/result
+    text = text.trim();
     data.map(async (item) => {
       const e: string = await fs.existsSync(`./${text}/${item}`);
       if (!e) {
@@ -194,10 +195,9 @@ class sheetCl {
         if (i == this.rowEnd - 1) {
           spinnies.succeed("spinner-1", { text: "files copy done!" });
           utils.success("go and check pictures!");
-          this.init()
+          this.init();
         }
       }
-
       //process.exit(1)
       //rl.close();
     });
